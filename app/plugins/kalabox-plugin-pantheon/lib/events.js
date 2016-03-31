@@ -62,7 +62,7 @@ module.exports = function(kbox, app) {
     // this app.
 
     // We want to edit our engine remove things
-    events.on('pre-engine-destroy', function(data) {
+    kbox.core.events.on('pre-engine-destroy', function(data) {
 
       // Get our services
       var services = _.flatten(_.map(app.composeCore, function(file)  {

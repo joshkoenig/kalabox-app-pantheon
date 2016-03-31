@@ -5,9 +5,6 @@ module.exports = function(kbox, app) {
   // npm modules
   var _ = require('lodash');
 
-  // Kalabox mods
-  var env = kbox.core.env;
-
   /*
    * Cli container def
    */
