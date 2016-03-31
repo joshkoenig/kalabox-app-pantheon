@@ -28,12 +28,15 @@ module.exports = function(kbox, app) {
     var runDef = cliContainer();
     runDef.opts.entrypoint = entrypoint;
     runDef.opts.cmd = cmd;
+    runDef.environment = app.env.getEnv();
 
     // Log the run
     var log = kbox.core.log.make(entrypoint.toUpperCase());
     log.info(runDef);
 
     return kbox.Promise.retry(function() {
+      // @todo: multi-app
+      // @todo: can we move this above where we set runDef.environment?
       app.env.setEnv('KALABOX_CLI_WORKING_DIR', '/code');
       return kbox.engine.run(runDef);
     });
