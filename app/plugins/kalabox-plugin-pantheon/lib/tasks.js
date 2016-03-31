@@ -2,6 +2,10 @@
 
 module.exports = function(kbox) {
 
+  // @todo: multi-app
+  // @todo: this won't work with multi-app, but we only need it for the cli
+  // so it might not matter for now.
+
   // Modules
   var _ = require('lodash');
 

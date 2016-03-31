@@ -146,7 +146,7 @@ module.exports = function(kbox, app) {
           rmRun.opts.entrypoint = 'rm';
           rmRun.opts.cmd = [
             '-rf',
-            '/code/' + process.env.KALABOX_APP_PANTHEON_FILEMOUNT
+            '/code/' + app.env.KALABOX_APP_PANTHEON_FILEMOUNT
           ];
 
           // Construct our extract definition
@@ -155,7 +155,7 @@ module.exports = function(kbox, app) {
           linkRun.opts.cmd = [
             '-nsf',
             '/media',
-            '/code/' + process.env.KALABOX_APP_PANTHEON_FILEMOUNT
+            '/code/' + app.env.KALABOX_APP_PANTHEON_FILEMOUNT
           ];
 
           // Do the Remove

@@ -1,6 +1,8 @@
 'use strict';
 
-module.exports = function(kbox) {
+// @todo
+
+module.exports = function(kbox, app) {
 
   // Node
   var crypto = require('crypto');

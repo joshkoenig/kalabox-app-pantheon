@@ -1,89 +1,83 @@
 
 'use strict';
-module.exports = function(kbox) {
+module.exports = function(kbox, app) {
+
+  // @todo: @remove
+  app.events.on('post-app-start', function() {
+    console.log('@@@@@ --> ' + app.name + ' <-- @@@@@');
+  });
 
   // Node modules
   var _ = require('lodash');
 
-  // Kbox modules
-  var events = kbox.core.events.context('6e086c59-20d2-46b5-84ce-44d2de1f58b6');
+  // Set our pantheon stuff into the env
+  // @todo: multi-app
+  var identifier = 'app_pantheon_config';
+  app.env.setEnvFromObj(app.config.pluginconfig.pantheon, identifier);
 
   /*
-   * Add our pantheon settings to the ENV and also
-   * add our data compose to the compose array
+   * Build the site after post-create happens
    */
-  kbox.whenAppRegistered(function(app) {
+  app.events.on('post-create-app', function(done) {
 
-    // Only run this if type of this app is pantheon.
-    if (app.config.type === 'pantheon') {
+    // Get our push and pull stuff
+    var puller = require('./pull.js')(kbox, app);
 
-      // Set our pantheon stuff into the env
-      var identifier = 'app_pantheon_config';
-      kbox.core.env.setEnvFromObj(app.config.pluginconfig.pantheon, identifier);
+    // Our pantheon config for later on
+    var pantheonConf = app.config.pluginconfig.pantheon;
 
-      /*
-       * Build the site after post-create happens
-       */
-      events.on('post-create-app', function(app, done) {
+    // Pull the pantheon site screenshot
+    return puller.pullScreenshot(pantheonConf.site, pantheonConf.env)
 
-        // Get our push and pull stuff
-        var puller = require('./pull.js')(kbox, app);
+    // Pull our code for the first time
+    .then(function() {
+      return puller.pullCode(pantheonConf.site, pantheonConf.env);
+    })
 
-        // Our pantheon config for later on
-        var pantheonConf = app.config.pluginconfig.pantheon;
+    // Pull our DB
+    .then(function() {
+      return puller.pullDB(pantheonConf.site, pantheonConf.env);
+    })
 
-        // Pull the pantheon site screenshot
-        return puller.pullScreenshot(pantheonConf.site, pantheonConf.env)
+    // Get our files
+    .then(function() {
+      return puller.pullFiles(pantheonConf.site, pantheonConf.env);
+    })
 
-        // Pull our code for the first time
-        .then(function() {
-          return puller.pullCode(pantheonConf.site, pantheonConf.env);
-        })
+    .nodeify(done);
 
-        // Pull our DB
-        .then(function() {
-          return puller.pullDB(pantheonConf.site, pantheonConf.env);
-        })
+  });
 
-        // Get our files
-        .then(function() {
-          return puller.pullFiles(pantheonConf.site, pantheonConf.env);
-        })
+  /*
+   * We don't want to uninstall our data container on a rebuild
+   * so remove the data container from here
+   *
+   * NOTE: this is a nifty implementation where we inception some events
+   * to target exactly what we want
+   */
+  app.events.on('pre-app-rebuild', function() {
 
-        .nodeify(done);
+    // @todo: multi-app
+    // @todo: need to figure out how to only have pre-engine-destroy run for
+    // this app.
 
+    // We want to edit our engine remove things
+    events.on('pre-engine-destroy', function(data) {
+
+      // Get our services
+      var services = _.flatten(_.map(app.composeCore, function(file)  {
+        return _.keys(kbox.util.yaml.toJson(file));
+      }));
+
+      // Remove the data element
+      var withoutData = _.remove(services, function(service) {
+        return service !== 'data';
       });
 
-      /*
-       * We don't want to uninstall our data container on a rebuild
-       * so remove the data container from here
-       *
-       * NOTE: this is a nifty implementation where we inception some events
-       * to target exactly what we want
-       */
-      events.on('pre-app-rebuild', function(app) {
+      // Update data to note remove data services on rebuilds
+      data.opts = {services: withoutData};
 
-        // We want to edit our engine remove things
-        events.on('pre-engine-destroy', function(data) {
-
-          // Get our services
-          var services = _.flatten(_.map(app.composeCore, function(file)  {
-            return _.keys(kbox.util.yaml.toJson(file));
-          }));
-
-          // Remove the data element
-          var withoutData = _.remove(services, function(service) {
-            return service !== 'data';
-          });
-
-          // Update data to note remove data services on rebuilds
-          data.opts = {services: withoutData};
-
-        });
-
-      });
-
-    }
+    });
 
   });
 

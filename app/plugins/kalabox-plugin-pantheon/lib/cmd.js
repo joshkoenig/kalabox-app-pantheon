@@ -37,7 +37,7 @@ module.exports = function(kbox, app) {
     log.info(runDef);
 
     return kbox.Promise.retry(function() {
-      env.setEnv('KALABOX_CLI_WORKING_DIR', '/code');
+      app.env.setEnv('KALABOX_CLI_WORKING_DIR', '/code');
       return kbox.engine.run(runDef);
     });
   };
